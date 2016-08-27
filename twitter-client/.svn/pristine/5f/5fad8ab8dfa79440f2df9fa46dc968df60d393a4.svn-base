@@ -1,0 +1,50 @@
+package gr.cite.nasa.www.streaming;
+
+import java.util.concurrent.BlockingQueue;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+
+import com.twitter.hbc.ClientBuilder;
+import com.twitter.hbc.core.Client;
+import com.twitter.hbc.core.Constants;
+import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
+import com.twitter.hbc.core.processor.StringDelimitedProcessor;
+import com.twitter.hbc.httpclient.auth.Authentication;
+import com.twitter.hbc.httpclient.auth.OAuth1;
+
+import gr.cite.nasa.www.client.TwitterApiClient;
+
+public class HoseBirdStream {
+
+	public static void createStream(String coordinates) throws InterruptedException, IOException {
+
+		StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
+		hosebirdEndpoint.addQueryParameter("locations", coordinates);
+
+		GetPropertyValues properties = new GetPropertyValues();
+		List<String> authHeader = properties.getPropValues();
+
+		Authentication auth = new OAuth1(authHeader.get(0), authHeader.get(1), authHeader.get(2), authHeader.get(3));
+
+		
+		BlockingQueue <String> messages = new ArrayBlockingQueue <>(100000);
+
+		Client client = new ClientBuilder().name("GeoStream").hosts(Constants.STREAM_HOST).endpoint(hosebirdEndpoint)
+				.authentication(auth).processor(new StringDelimitedProcessor(messages)).gzipEnabled(false)
+				.connectionTimeout(15000).socketTimeout(15000).build();
+		client.connect();
+
+		while (!client.isDone()) {
+			String message = messages.take();
+			System.out.println(message);
+		}
+		client.stop();
+	}
+
+	public static void main(String[] args) throws InterruptedException, IOException {
+
+		createStream("23.686939,37.948799,23.789761,38.033428");
+		createStream("22.8995,40.586239,22.98904,40.6526");
+	}
+}

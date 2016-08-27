@@ -1,0 +1,9 @@
+#canvasOne {
+    background-color: white;
+    border-style: solid;
+    border-color: gray;
+    border-radius: 5px;
+    position: relative;
+    /*cursor: pointer;*/
+    cursor: url(images/cursor/social_media_icons_blot_icons_set_48x48_0002_twitter_1.cur), default;
+}

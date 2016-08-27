@@ -1,0 +1,58 @@
+/*
+ Functions to fill dom with some of the data of our dataset
+ */
+
+function createDomforLocations(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationResult').append(input);
+}
+
+function createDomforTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendResult').append(input);
+}
+
+function createDomforLocationPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationNameResult').append(input);
+}
+
+function createDomforTrendPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendNameResult').append(input);
+}
+
+function createDomforTopTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.topTrendsResult').append(input);
+}

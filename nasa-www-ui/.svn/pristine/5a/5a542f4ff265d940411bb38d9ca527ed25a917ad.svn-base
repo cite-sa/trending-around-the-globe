@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+    <meta charset="UTF-8"/>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>Trending Around the Globe</title>
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script src="js/jquery-2.2.4.js" type="text/javascript"></script>
+    <script src="js/bootstrap.js" type="text/javascript"></script>
+    <script src="js/CatchTest.js" type="text/javascript"></script>
+
+    <script src="http://worldwindserver.net/webworldwind/worldwindlib.js" type="text/javascript"></script>
+
+    <script src="WWW.js" type="text/javascript"></script>
+    <script src="ajaxClient.js" type="text/javascript"></script>
+    <script src="createDoms.js" type="text/javascript"></script>
+
+    <script src="gesture/ClickRecognizer.js" type="text/javascript"></script>
+    <script src="gesture/TapRecognizer.js" type="text/javascript"></script>
+
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
+          crossorigin="anonymous">
+    <link href="page-header.css" rel="stylesheet">
+    <link href="canvas.css" rel="stylesheet">
+    <link href="footer.css" rel="stylesheet">
+    <link href="container.css" rel="stylesheet">
+    <link href="drawBackground.css" rel="stylesheet">
+    <link href="alignment.css" rel="stylesheet">
+
+<body>
+
+<div class="container">
+    <nav class="navbar navbar-default">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#"> <img src="images/logo.png"
+                                                   class="img-rounded" alt="CiteLogo" width="30" height="20"/></a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="#"><a href="#">Home</a></li>
+            <li><a href="#">Info</a></li>
+            <li><a href="#">Exit</a></li>
+        </ul>
+    </nav>
+    <div class="page-header" id="page-header">
+        <h1>Trending Around the Globe</h1>
+        <p>Cite's proposal for NASA Web World Wind Europa Challenge 2016</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8" style="position: relative">
+            <canvas id="canvasOne" width="750" height="750">
+                Your browser does not support HTML5 Canvas.
+            </canvas>
+        </div>
+
+        <div class="col-md-4">
+            <div class="jumbotron" id="jumbotron">
+                <div class="buttons">
+                    <button type="submit" id="locationsButton" class="btn btn-default">Locations</button>
+                    <button type="submit" id="trendsButton" class="btn btn-default">Trends</button>
+                    <button type="submit" id="clearButton" class="btn btn-primary">Clear</button>
+                </div>
+                <div class="forms" id="fields">
+                    <div class="form-group1">
+                        <label>Location/Name:</label>
+                        <input type="text" class="form-control1" id="locationName">
+                    </div>
+
+                    <div class="form-group2">
+                        <label>Trend/Name:</label>
+                        <input type="text" class="form-control2" id="trendName">
+                    </div>
+
+                    <div class="form-group3">
+                        <label>TopTrends:</label>
+                        <input type="text" class="form-control3" id="counter">
+                    </div>
+
+                </div>
+                <div>
+                    <button type="submit" id="drawButton" class="btn btn-danger">Drawing</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="LocationHeader">
+                <h5>Locations and woeid</h5>
+            </div>
+            <div class="locationResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TrendHeader">
+                <h5>Trends and trendVolume</h5>
+            </div>
+            <div class="trendResult" id="trendResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="LocationNameHeader">
+                <h5>Locations/Name</h5>
+            </div>
+            <div class="locationNameResult" id="locationNameResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TrendNameHeader">
+                <h5>Trends/Name</h5>
+            </div>
+            <div class="trendNameResult" id="trendNameResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TopTrends">
+                <h5>TopTrends</h5>
+            </div>
+            <div class="topTrendsResult" id="topTrendsResult"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        $("#locationsButton").click(function () {
+            findAllLocations();
+        });
+        $("#trendsButton").click(function () {
+            findAllTrends();
+        });
+        $("#clearButton").click(function () {
+            $("#locationName").val('');
+            $("#trendName").val('');
+            $("#counter").val('');
+            $(".locationResult").empty();
+            $(".trendResult").empty();
+            $(".locationNameResult").empty();
+            $(".trendNameResult").empty();
+            $(".topTrendsResult").empty();
+        });
+        $("#clearButton").click(function () {
+            location.reload();
+        });
+        $("#locationName").bind("enterKey", function (e) {
+            var locationNameValue = $('#locationName').val();
+            findLocationByName(locationNameValue);
+        });
+        $("#locationName").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#trendName").bind("enterKey", function (e) {
+            var trendNameValue = $('#trendName').val();
+            findTrendByName(trendNameValue);
+        });
+        $("#trendName").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#counter").bind("enterKey", function (e) {
+            var counterValue = $('#counter').val();
+            findTopTrends(counterValue);
+        });
+        $("#counter").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#drawButton").attr("disabled", false);
+        $("#drawButton").click(function () {
+            drawAllLocations();
+        });
+        $("#locationName").val('');
+        $("#trendName").val('');
+        $("#counter").val('');
+    });
+</script>
+
+<script type="text/javascript">
+    $("#drawButton").click(function () {
+        $("#drawButton").attr("disabled", true);
+    });
+</script>
+
+</html>

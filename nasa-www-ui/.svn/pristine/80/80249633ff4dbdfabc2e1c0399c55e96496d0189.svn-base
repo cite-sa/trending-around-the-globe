@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>Trending Around the Globe</title>
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script src="js/jquery-2.2.4.js" type="text/javascript"></script>
+    <!-- <script src="js/CatchTest.js" type="text/javascript"></script> -->
+
+    <script src="js/bootstrap.js" type="text/javascript"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    	integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+		crossorigin="anonymous"></script>
+    
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+		crossorigin="anonymous">
+          
+    <script src="http://worldwindserver.net/webworldwind/worldwindlib.js" type="text/javascript"></script>
+
+    <!-- <script src="gesture/ClickRecognizer.js" type="text/javascript"></script>
+    <script src="gesture/TapRecognizer.js" type="text/javascript"></script> -->
+
+	<script src="http://api.tiles.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js" type="text/javascript"></script>
+	
+    
+    
+    <script src="WWW.js" type="text/javascript"></script>
+    <script src="ajaxClient.js" type="text/javascript"></script>
+    <script src="createDoms.js" type="text/javascript"></script>
+          
+    <link rel="stylesheet" href="trending.css">
+
+<body>
+
+<nav class="navbar navbar-default navbar-fixed-top" id="trending-navbar">
+	<div class="container-fluid">
+		<div class="navbar-header pull-left">
+			<a href="#" class="navbar-brand" id="cite-logo">
+				<img alt="CITE Logo" src="images/cite_logo.png" class="img-responsive">
+			</a>
+		</div>
+		<div class="navbar-header pull-right">
+			<button type="submit" id="shapesButton" class="btn btn-primary">Current shapes</button>
+			
+			
+		<!-- <div class="input-group">
+      		<input type="text" class="form-control" aria-label="...">
+      		<div class="input-group-btn">
+        		<button type="button" class="btn btn-default dropdown-toggle"
+        			data-toggle="dropdown"
+					aria-haspopup="true"
+					aria-expanded="false">
+					<span class="caret"></span>
+				</button>
+        		<ul class="dropdown-menu dropdown-menu-right">
+          			<li><a href="#">Search for city</a></li>
+        			<li><a href="#">Search for trend</a></li>
+        		</ul>
+      		</div>
+   		</div> -->
+			<!-- <ul class="nav">
+				<li class="pull-left">
+					<a href="http://planetserver.eu" class="hidden-xs navbar-icon navbar-home-link">
+						<span class="hidden-xs navbar-home-link-arrow glyphicon glyphicon-chevron-left"></span>
+						<span class="hidden-xs navbar-home-link-text">Back to home</span>
+					</a>
+					<a href="http://planetserver.eu" class="visible-xs navbar-icon navbar-home-link">
+						<span class="glyphicon glyphicon-home"></span>
+					</a>
+				</li>
+				<li class="pull-left">
+					<span role="separator" class="divider-container">
+						<span class="divider"></span>
+					</span>
+				</li>
+				<li class="pull-right" id="user-account">
+					<div class="hidden-xs navbar-icon account-info">
+						Signed in as <a class="account-info-toggle" id="account-info-toggle">me</a>
+					</div>
+					<a class="visible-xs navbar-icon account-info-toggle">
+						<span class="glyphicon glyphicon-user"></span>
+						<span class="navbar-user-arrow glyphicon glyphicon-triangle-bottom"></span>
+					</a>
+					<div style="display: none;" class="panel" id="account-info-panel">
+						<div class="triangle"></div>
+						<div class="panel-body"></div>
+					</div>
+				</li>
+			</ul> -->
+		</div>
+	</div>
+</nav>
+
+
+<!-- <div class="container">
+    <nav class="navbar navbar-default">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#"> <img src="images/logo.png"
+                                                   class="img-rounded" alt="CiteLogo" width="30" height="20"/></a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="#"><a href="#">Home</a></li>
+            <li><a href="#">Info</a></li>
+            <li><a href="#">Exit</a></li>
+        </ul>
+    </nav>
+    <div class="page-header" id="page-header">
+        <h1>Trending Around the Globe</h1>
+        <p>Cite's proposal for NASA Web World Wind Europa Challenge 2016</p>
+    </div>
+</div> -->
+
+<div id="canvas-container">
+	<canvas id="canvasOne">
+		Your browser does not support HTML5 Canvas.
+	</canvas>
+</div>
+
+
+<!-- <div class="container">
+    <div class="row">
+        <div class="col-xs-12" style="position: relative">
+            <canvas id="canvasOne" width="750" height="750">
+                Your browser does not support HTML5 Canvas.
+            </canvas>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="jumbotron" id="jumbotron">
+                <div class="buttons">
+                    <button type="submit" id="locationsButton" class="btn btn-default">Locations</button>
+                    <button type="submit" id="trendsButton" class="btn btn-default">Trends</button>
+                    <button type="submit" id="clearButton" class="btn btn-primary">Clear</button>
+                    <button type="submit" id="shapesButton" class="btn btn-primary">Current shapes</button>
+                </div>
+                <div class="forms" id="fields">
+                    <div class="form-group1">
+                        <label>Location/Name:</label>
+                        <input type="text" class="form-control1" id="locationName">
+                    </div>
+
+                    <div class="form-group2">
+                        <label>Trend/Name:</label>
+                        <input type="text" class="form-control2" id="trendName">
+                    </div>
+
+                    <div class="form-group3">
+                        <label>TopTrends:</label>
+                        <input type="text" class="form-control3" id="counter">
+                    </div>
+
+                </div>
+                <div>
+                    <button type="submit" id="drawButton" class="btn btn-danger">Drawing</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="LocationHeader">
+                <h5>Locations and woeid</h5>
+            </div>
+            <div class="locationResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TrendHeader">
+                <h5>Trends and trendVolume</h5>
+            </div>
+            <div class="trendResult" id="trendResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="LocationNameHeader">
+                <h5>Locations/Name</h5>
+            </div>
+            <div class="locationNameResult" id="locationNameResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TrendNameHeader">
+                <h5>Trends/Name</h5>
+            </div>
+            <div class="trendNameResult" id="trendNameResult"></div>
+        </div>
+        <div class="col-md-2">
+            <div class="TopTrends">
+                <h5>TopTrends</h5>
+            </div>
+            <div class="topTrendsResult" id="topTrendsResult"></div>
+        </div>
+    </div>
+</div> -->
+
+<div id="side-panel">
+	<div id="side-panel-toggle" class="no-select">
+		<div class="side-panel-toggle-icon-wrapper">
+			<span class="glyphicon glyphicon-menu-hamburger side-panel-toggle-icon"></span>
+		</div>
+	</div>
+
+</div>
+
+<div id="coordinate-overlay">
+	<span class="coordinate-container">
+		<img src="images/icons/latitude.png" class="coordinate-icon">
+		<span id="terrainLatitude"></span>
+	</span>
+	<span class="coordinate-container">
+		<img src="images/icons/longitude.png" class="coordinate-icon">
+		<span id="terrainLongitude"></span>
+	</span>
+	<span class="coordinate-container">
+		<img src="" class="coordinate-icon">
+		<span id="terrainElevation"></span>
+	</span>
+	<span class="coordinate-container">
+		<img src="images/icons/eye.png" class="coordinate-icon">
+		<span id="eyeAltitude"></span>
+	</span>
+</div>
+
+
+</body>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+    	$("#side-panel-toggle").click(function() {
+    		$("#side-panel").toggleClass("open");
+    	});
+    });
+</script>
+    	
+    	
+<script type="text/javascript">
+    $(document).ready(function () {
+
+    	$("#shapesButton").click(function () {
+            pickShapes();
+        });
+        $("#locationsButton").click(function () {
+            findAllLocations();
+        });
+        $("#trendsButton").click(function () {
+            findAllTrends();
+        });
+        $("#clearButton").click(function () {
+            $("#locationName").val('');
+            $("#trendName").val('');
+            $("#counter").val('');
+            $(".locationResult").empty();
+            $(".trendResult").empty();
+            $(".locationNameResult").empty();
+            $(".trendNameResult").empty();
+            $(".topTrendsResult").empty();
+        });
+        $("#clearButton").click(function () {
+            location.reload();
+        });
+        $("#locationName").bind("enterKey", function (e) {
+            var locationNameValue = $('#locationName').val();
+            findLocationByName(locationNameValue);
+        });
+        $("#locationName").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#trendName").bind("enterKey", function (e) {
+            var trendNameValue = $('#trendName').val();
+            findTrendByName(trendNameValue);
+        });
+        $("#trendName").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#counter").bind("enterKey", function (e) {
+            var counterValue = $('#counter').val();
+            findTopTrends(counterValue);
+        });
+        $("#counter").keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger("enterKey");
+            }
+        });
+        $("#drawButton").attr("disabled", false);
+        $("#drawButton").click(function () {
+            drawAllLocations();
+        });
+        $("#locationName").val('');
+        $("#trendName").val('');
+        $("#counter").val('');
+    });
+</script>
+
+<script type="text/javascript">
+    $("#drawButton").click(function () {
+        $("#drawButton").attr("disabled", true);
+    });
+</script>
+
+</html>

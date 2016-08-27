@@ -1,0 +1,96 @@
+/*
+ Functions to fill dom with some of the data of our dataset
+ */
+
+function createModal(id) {
+	var html = '<div id=' + id + ' class="modal fade" tabindex="-1" role="dialog">' +
+	  '<div class="modal-dialog" role="document">' +
+	    '<div class="modal-content">' +
+	      '<div class="modal-header">' +
+	        '<button type="button" class="close" data-dismiss="modal" aria-label="Close">' + 
+	        	'<span aria-hidden="true">&times;</span>' +
+        	'</button>' +
+	        '<h4 class="modal-title"></h4>' +
+	      '</div>' +
+	      '<div class="modal-body">' +
+	      '</div>' +
+	    '</div>' +
+	  '</div>' +
+	'</div>';
+	
+	$("body").append(html);
+}
+
+function buildModal(location) {
+	console.log(location)
+	var cityModal = $("#city-modal");
+	console.log(cityModal)
+	cityModal.find(".modal-title").first().text(location.name + ", " + location.country);
+	topTrendsPerLocation(location, buildCityModalBody);
+	
+	
+}
+
+function buildCityModalBody(trends, location) {
+	var cityModal = $("#city-modal");
+	cityModal.find(".modal-body").first()
+		.append($("<div>").append(trends));
+	console.log(trends)
+	
+	cityModal.modal('show');
+}
+
+function createDomforLocations(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationResult').append(input);
+}
+
+function createDomforTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendResult').append(input);
+}
+
+function createDomforLocationPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationNameResult').append(input);
+}
+
+function createDomforTrendPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendNameResult').append(input);
+}
+
+function createDomforTopTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.topTrendsResult').append(input);
+}

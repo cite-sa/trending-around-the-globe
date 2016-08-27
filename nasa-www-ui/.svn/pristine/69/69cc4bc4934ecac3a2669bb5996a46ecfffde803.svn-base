@@ -1,0 +1,157 @@
+/*
+ Functions to fill dom with some of the data of our dataset
+ */
+
+function createModal(id) {
+	var html = '<div id=' + id + ' class="modal fade" tabindex="-1" role="dialog">' +
+	  '<div class="modal-dialog modal-lg" role="document">' +
+	    '<div class="modal-content">' +
+	      '<div class="modal-header">' +
+	        '<button type="button" class="close" data-dismiss="modal" aria-label="Close">' + 
+	        	'<span aria-hidden="true">&times;</span>' +
+        	'</button>' +
+	        '<h4 class="modal-title"></h4>' +
+	      '</div>' +
+	      '<div class="modal-body">' +
+		  	'<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">' +
+		  		'<div class="panel panel-default">' +
+		  			'<div class="panel-heading" role="tab" id="current-trends-heading">' +
+		  				'<h4 class="panel-title">' +
+		  					'<a role="button"' + 
+		  						'data-toggle="collapse"' +
+		  						'data-parent="#accordion"' + 
+		  						'href="#current-trends"' +
+		  						'aria-expanded="true"' +
+		  						'aria-controls="collapseOne">' +
+	  							'Current Trends' +
+							'</a>' +
+						'</h4>' +
+					'</div>' +
+					'<div id="current-trends" class="panel-collapse collapse" role="tabpanel"' + 
+						'aria-labelledby="current-trends-heading">' +
+						'<div class="panel-body"></div>' +
+					'</div>' +
+				'</div>' +
+				'<div class="panel panel-default">' +
+			    '<div class="panel-heading" role="tab" id="past-trends-heading">' +
+			      '<h4 class="panel-title">' +
+			        '<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#past-trends" aria-expanded="false" aria-controls="collapseTwo">' +
+			          'Past Trends' +
+			        '</a>' +
+			      '</h4>' +
+			    '</div>' +
+			    '<div id="past-trends" class="panel-collapse collapse" role="tabpanel" aria-labelledby="past-trends-heading">' +
+			      '<div class="panel-body"></div>' +
+			    '</div>' +
+			  '</div>' +
+			  '</div>'
+	      '</div>' +
+	    '</div>' +
+	  '</div>' +
+	'</div>';
+	
+	
+	$("body").append(html);
+	
+	$('#city-modal').on('hidden.bs.modal', function (e) {
+		  
+	});
+	
+}
+
+function buildModal(location) {
+	console.log(location)
+	var cityModal = $("#city-modal");
+	console.log(cityModal)
+	cityModal.find(".modal-title").first().text(location.name + ", " + location.country);
+	topTrendsPerLocation(location, buildCityModalBody);
+	
+}
+
+function buildCityModalBody(trends, location) {
+	var cityModal = $("#city-modal");
+	cityModal.find(".modal-body").first()
+		.append($("<div>").append(trends));
+	console.log(trends)
+	
+	var curentTrends = $("#current-trends").children(".panel-body");
+	var pastTrends = $("#past-trends").children(".panel-body");
+	
+	var buildTrendRow = function(trend) {
+		return $("<div>", {class: "row"})
+			.append($("<span>", {class: "col-xs-4"}).text(trend.name))
+			.append($("<span>", {class: "col-xs-4"}).text(trend.tweet_volume))
+			.append($("<span>", {class: "col-xs-4"}).text(new Date(trend.timestamp.epochSecond).toUTCString()));
+	};
+	$.each(trends, function(index, trend) {
+		if (trend.active == 1) {
+			currentTrends.append(buildTrendRow(trend));
+		} else if (trend.active == 0) {
+			pastTrends.append(buildTrendRow(trend));
+		}
+	});
+	
+	
+	
+	
+	
+	
+	
+	
+	cityModal.modal('show');
+}
+
+function createDomforLocations(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationResult').append(input);
+}
+
+function createDomforTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendResult').append(input);
+}
+
+function createDomforLocationPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.woeid + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.locationNameResult').append(input);
+}
+
+function createDomforTrendPerName(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.trendNameResult').append(input);
+}
+
+function createDomforTopTrends(data) {
+    var input = '';
+    $.each(data, function (index, value) {
+        input = input + '<div><p>' + value.name + ' : ' + value.locations.tweet_volume + '</p></div>';
+        if (index > 10) {
+            return false;
+        }
+    });
+    $('.topTrendsResult').append(input);
+}

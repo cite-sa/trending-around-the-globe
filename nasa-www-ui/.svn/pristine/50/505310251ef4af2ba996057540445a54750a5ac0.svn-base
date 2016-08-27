@@ -1,0 +1,410 @@
+$(document).ready(function () {
+    var location = {
+        long: undefined,
+        lat: undefined
+    };
+
+    var canvas = document.getElementById("canvasOne");
+    var gl = canvas.getContext('webgl');
+    drawContext = new WorldWind.DrawContext(gl);
+    //console.log(drawContext);
+
+    initiate_geolocation();
+
+    var highlightedItems = [];
+
+    var handlePick = function (recognizer) {
+
+        var x = recognizer.clientX,
+            y = recognizer.clientY;
+
+        var redrawRequired = highlightedItems.length > 0; // must redraw if we de-highlight previously picked items
+
+        for (var h = 0; h < highlightedItems.length; h++) {
+            highlightedItems[h].highlighted = false;
+        }
+        highlightedItems = [];
+
+        var pickList = wwd.pick(wwd.canvasCoordinates(x, y));
+        if (pickList.objects.length > 0) {
+            redrawRequired = true;
+        }
+
+        if (pickList.objects.length > 0) {
+            for (var p = 0; p < pickList.objects.length; p++) {
+                pickList.objects[p].userObject.highlighted = true;
+
+                highlightedItems.push(pickList.objects[p].userObject);
+
+                if (pickList.objects[p].labelPicked) {
+                    console.log("Label picked");
+                }
+            }
+        }
+
+        if (redrawRequired) {
+            wwd.redraw();
+        }
+
+        if (pickList.objects.length == 1 && pickList.objects[0].isTerrain) {
+            var position = pickList.objects[0].position;
+            wwd.goTo(new WorldWind.Location(position.latitude, position.longitude));
+        }
+    };
+
+    function initWww(position) {
+
+        wwd = new WorldWind.WorldWindow("canvasOne");
+
+        location.latitude = position.coords.latitude;
+        location.longitude = position.coords.longitude;
+        wwd.navigator.lookAtLocation.latitude = location.latitude;
+        wwd.navigator.lookAtLocation.longitude = location.longitude;
+        wwd.navigator.range = 30e3; // 30km above the ellipsoid
+
+        WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
+
+        WorldWind.configuration.gpuCacheSize = 250e6; // 250 MB
+
+        var bMNGLayer = wwd.addLayer(new WorldWind.BMNGLayer());
+        var BmngOneImageLayer = wwd.addLayer(new WorldWind.BMNGOneImageLayer());
+        var bingAerialLayer = wwd.addLayer(new WorldWind.BingAerialLayer());
+        //var bingAerialWithLabelsLayer = wwd.addLayer(new WorldWind.BingAerialWithLabelsLayer());//this is it
+        var compassLayer = wwd.addLayer(new WorldWind.CompassLayer());// ?
+        var coordinatesLayer = wwd.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
+
+        var viewControlsLayer = wwd.addLayer(new WorldWind.ViewControlsLayer(wwd));
+/*      viewControlsLayer.activeOpacity = 1;
+        viewControlsLayer.inactiveOpacity = 1;
+        viewControlsLayer.showFieldOfViewControl = true;
+        viewControlsLayer.showHeadingControl = true;
+        viewControlsLayer.showPanControl = true;
+        viewControlsLayer.showTiltControl = true;
+        viewControlsLayer.showZoomControl = true;*/
+
+        var blueMarbleLayer = wwd.addLayer(new WorldWind.BlueMarbleLayer(wwd));
+        var frameStatisticsLayer = wwd.addLayer(new WorldWind.FrameStatisticsLayer(wwd));
+
+        //var image = "images/pushpins/castshadow-red.png";
+        var image = "images/pushpins/situation-pin.png";
+
+        var pinLibrary = WorldWind.configuration.baseUrl + "images/pushpins/",
+
+        placemark, placemarkAttributes = new WorldWind.PlacemarkAttributes(null),
+        highlightAttributes, startLayer = new WorldWind.RenderableLayer("Starting Position"), latitude = location.latitude, longitude = location.longitude;
+
+        placemarkAttributes.imageScale = 1;
+        placemarkAttributes.imageOffset = new WorldWind.Offset(WorldWind.OFFSET_FRACTION, 0.3, WorldWind.OFFSET_FRACTION, 0.0);
+        placemarkAttributes.imageColor = WorldWind.Color.WHITE;
+        placemarkAttributes.labelAttributes.offset = new WorldWind.Offset(WorldWind.OFFSET_FRACTION, 0.5, WorldWind.OFFSET_FRACTION, 1.0);
+        placemarkAttributes.labelAttributes.color = WorldWind.Color.RED;
+        placemarkAttributes.drawLeaderLine = true;
+        placemarkAttributes.leaderLineAttributes.outlineColor = WorldWind.Color.RED;
+
+        placemark = new WorldWind.Placemark(new WorldWind.Position(latitude, longitude, 1e2), true, null);
+        placemark.label = "You are here"+" "
+            + "Lat"+" "
+            + placemark.position.latitude.toPrecision(6).toString()
+            + "\n"
+            + "Lon"+" "
+            + placemark.position.longitude.toPrecision(6).toString();
+
+        placemark.altitudeMode = WorldWind.RELATIVE_TO_GLOBE;
+
+        placemarkAttributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+        placemarkAttributes.imageSource = image;
+        placemark.attributes = placemarkAttributes;
+
+        highlightAttributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+        highlightAttributes.imageScale = 0.6;// 1.2
+        placemark.highlightAttributes = highlightAttributes;
+
+        startLayer.addRenderable(placemark);
+
+        wwd.addLayer(startLayer);
+        wwd.redraw();
+
+        var tapRecognizer = new WorldWind.TapRecognizer(wwd, handlePick);
+        tapRecognizer.enabled = true;
+
+        var clickRecognizer = new WorldWind.ClickRecognizer(wwd, handlePick);
+        clickRecognizer.enabled = true;
+
+        //var eventListenerMove = wwd.addEventListener("mousemove", handlePick);
+        var eventListenerClick = wwd.addEventListener("mouseclick", handlePick);
+        //var eventMouseEnter = wwd.addEventListener("mouseenter", handlePick);
+
+        wwd.redraw();
+    }
+
+    function initiate_geolocation() {
+        navigator.geolocation.getCurrentPosition(initWww,
+            handle_errors);
+    };
+
+    function handle_errors(error) {
+
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                alert("user did not share geolocation data");
+                break;
+
+            case error.POSITION_UNAVAILABLE:
+                alert("could not detect current position");
+                break;
+
+            case error.TIMEOUT:
+                alert("retrieving position timed out");
+                break;
+
+            default:
+                alert("unknown error");
+                break;
+        }
+    };
+});
+
+//document.ready end :)
+
+var wwd = undefined;
+var drawContext = undefined;
+
+function drawLocation(data) {
+
+    var placemarkLayer = new WorldWind.RenderableLayer("Placemarks");
+    wwd.addLayer(placemarkLayer);
+
+    var locations = [];
+
+    $.each(data, function (index, value) {
+
+        //var centroidImageCities = "images/pushpins/push-pin-yellow-32.png";
+        //var centroidImageCountries = "images/pushpins/castshadow-black.png";
+    	
+    	//Start of creating Polygons
+    	var polygonsLayer = new WorldWind.RenderableLayer();
+        polygonsLayer.displayName = "Locations";
+        wwd.addLayer(polygonsLayer);
+
+        var polygonAltitude = 0;
+
+        var boundaries = [];
+            boundaries[0] = [];
+            boundaries[0].push(new WorldWind.Position(value.southEastLatitude, value.southEastLongitude,polygonAltitude));
+            boundaries[0].push(new WorldWind.Position(value.northEastLatitude, value.northEastLongitude,  polygonAltitude));
+            boundaries[0].push(new WorldWind.Position(value.northWestLatitude, value.northWestLongitude, polygonAltitude));
+            boundaries[0].push(new WorldWind.Position(value.southWestLatitude, value.southWestLongitude, polygonAltitude));
+
+        var polygon = new WorldWind.Polygon(boundaries,null);
+
+             polygon.altitudeMode = WorldWind.RELATIVE_TO_GROUND; // ABSOLUTE // , // RELATIVE_TO_GROUND // , //CLAMP_TO_GROUND
+             polygon.displayName = value.name;
+             polygon.extrude = true; // extrude the polygon  edges to the ground
+
+        var polygonAttributes = new WorldWind.ShapeAttributes( null);
+            polygonAttributes.drawInterior = true;
+            polygonAttributes.drawOutline = true;
+
+           /* if (value.parentID == 1){
+            	polygonAttributes.outlineColor = WorldWind.Color.BLUE;
+            }
+            else {
+            	polygonAttributes.outlineColor = WorldWind.Color.CYAN;
+            }*/
+
+             polygonAttributes.interiorColor = new WorldWind.Color( 1, 2, 4,0.5);// (0, 1, 1, 0.5),
+             polygonAttributes.drawVerticals = polygon.extrude;
+             polygonAttributes.applyLighting = false;
+             polygonAttributes.displayName = value.name; //?
+             //polygon.attributes = polygonAttributes;
+
+        var highlightAttributes = new WorldWind.ShapeAttributes(polygonAttributes);
+            highlightAttributes.outlineColor = WorldWind.Color.RED;
+            highlightAttributes.interiorColor =new WorldWind.Color( 1, 1, 1,0.5);
+            polygon.highlightAttributes = highlightAttributes;         
+            
+        //End of creating Polygons
+
+        //Start of creating Placemarks
+        var centroidImageCities = "images/pushpins/social_media_icons_flat_shadow_set_24x24_0002_twitter.png";
+        var centroidImageCountries = "images/pushpins/twitter_e.png";
+
+        var pinLibrary = WorldWind.configuration.baseUrl + "images/pushpins/",
+            placemark, placemarkAttributes = new WorldWind.PlacemarkAttributes(null), highlightAttributes,
+
+            latitude = value.centroidLatitude,
+            longitude = value.centroidLongitude;
+
+        placemarkAttributes.imageScale = 1;
+        placemarkAttributes.imageOffset = new WorldWind.Offset(WorldWind.OFFSET_FRACTION, 0.3, WorldWind.OFFSET_FRACTION, 0.0);
+        placemarkAttributes.imageColor = WorldWind.Color.WHITE;
+        placemarkAttributes.labelAttributes.offset = new WorldWind.Offset(WorldWind.OFFSET_FRACTION, 0.5, WorldWind.OFFSET_FRACTION, 1.0);
+
+        if (value.parentID == 1) {
+        	
+            placemarkAttributes.labelAttributes.color = WorldWind.Color.BLUE;
+            placemarkAttributes.imageSource = centroidImageCountries; 
+            polygonAttributes.outlineColor = WorldWind.Color.BLUE;
+        }
+        else {
+        	
+            placemarkAttributes.labelAttributes.color = WorldWind.Color.CYAN;
+            placemarkAttributes.imageSource = centroidImageCities;
+            polygonAttributes.outlineColor = WorldWind.Color.CYAN;
+        }
+        
+        polygon.attributes = polygonAttributes;
+
+        placemarkAttributes.drawLeaderLine = true;
+        placemarkAttributes.leaderLineAttributes.outlineColor = WorldWind.Color.RED;
+
+        var placemarkPositon = new WorldWind.Position(value.centroidLatitude, value.centroidLongitude, 1e2);
+
+        placemark = new WorldWind.Placemark(placemarkPositon, true, null);
+
+        placemark.label = value.name + "\n"
+            + "Lat "
+            + value.centroidLatitude
+            + "\n" + "Lon "
+            + value.centroidLongitude
+            + "\n" + "woeid "
+            + value.woeid + "\n"
+            + "PopRank" + "\t"
+            + value.popRank + "\n"
+            + "AreaRank" + "\t"
+            + value.areaRank;
+
+        placemark.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+
+        //placemarkAttributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+
+        placemark.attributes = placemarkAttributes;
+
+        highlightAttributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+        highlightAttributes.imageScale = 0.6;// 1.2
+        placemark.highlightAttributes = highlightAttributes;
+        
+        //End of creating Placemarks
+
+        polygonsLayer.addRenderable(polygon);
+        placemarkLayer.addRenderable(placemark);
+
+/*        if (value.trendsIDs != null) {
+            showingTrends(data,wwd,value.woeid);
+        }*/
+
+        locations.push(data[index]);
+        wwd.redraw();
+
+         //showingTrends(data, wwd, value.woeid);
+    })
+    localStorage.setItem("locations", JSON.stringify(locations));
+    drawTrends(locations)
+};
+
+function drawTrends(locations){
+
+    $.each(locations, function( key, value ) {
+           showingTrends(wwd,value.woeid);
+    });
+};
+
+function showingTrends(wwd,woeid) {
+    if (wwd.navigator.range > 10000) {
+    	
+        var limit = 4;
+        topTrendsPerLocation(woeid,limit);
+    } else if (wwd.navigator.range > 5000) {
+    	
+        var limit = 3;
+        topTrendsPerLocation(woeid,limit);
+    } else if (wwd.navigator.range > 1000) {
+    	
+        var limit = 2;
+        topTrendsPerLocation(woeid,limit);
+    } else {
+    	
+        var limit = 1;
+        topTrendsPerLocation(woeid,limit);
+    }
+};
+
+function createGeoTextForTrends(data, woeid) {
+
+    var text, textAttributes = new WorldWind.TextAttributes(null), textLayer = new WorldWind.RenderableLayer("GeoText");
+    wwd.addLayer(textLayer);
+
+   /* var isDataEmpty = isEmpty(data);
+    if (isDataEmpty = true) {
+        console.log("No data found!!");
+    }*/
+/*    var isEmptyObject = jQuery.isEmptyObject(data);
+    if ( isEmptyObject= true){
+        console.log("No data yet!");
+    }
+    else {*/
+        var locations = JSON.parse(localStorage.getItem("locations"));
+
+        for (locIndex in locations){
+            if (woeid = locIndex.woeid){
+               var southEastLongitude = locIndex.southEastLongitude;
+               var southWestLongitude = locIndex.southWestLongitude;
+               var southWestLatitude =  locIndex.southWestLatitude;
+               var southWestLongitude = locIndex.southWestLongitude;
+            }
+        }
+
+        var locationOfWoeid = locations.filter(function(locCounter){
+            if(locCounter.woeid == woeid){
+                return locCounter.southEastLongitude,locCounter.southWestLongitude,locCounter.southWestLatitude,locCounter.southWestLongitude;
+            }
+        });
+
+        textAttributes.color = WorldWind.Color.GREEN;
+        textAttributes.depthTest = false;
+
+        //textAttributes.depthTest = true;
+
+        console.log(data);
+
+        $.each(data, function (index) {
+        	
+            var coordinates = randomPointsInBB(locationOfWoeid.southEastLongitude, locationOfWoeid.southWestLongitude, locationOfWoeid.southWestLatitude, locationOfWoeid.southWestLongitude);
+
+            var trends, trendPosition = new WorldWind.Position(coordinates[0], coordinates[1], 1e6);
+
+            text = new WorldWind.GeographicText(trendPosition, data);
+
+            text.attributes = textAttributes;
+
+            textLayer.addRenderable(text);
+
+            console.log("zwgrafise");
+
+            wwd.redraw();
+        });
+        wwd.redraw();
+   /* }*/
+};
+
+function randomPointsInBB(southEastLongitude, southWestLongitude, southWestLatitude, northWestLatitude) {
+
+    var latitude = Math.floor(Math.random() * northWestLatitude)
+        + southWestLatitude;
+    var longitude = Math.floor(Math.random() * southEastLongitude)
+        + southWestLongitude;
+
+    var latitudeAndLongitude = [latitude, longitude];
+
+    return latitudeAndLongitude;
+};
+
+/*
+function isEmpty(obj) {
+    for(var prop in obj) {
+        if(obj.hasOwnProperty(prop))
+            return false;
+    }
+
+    return true;
+}*/

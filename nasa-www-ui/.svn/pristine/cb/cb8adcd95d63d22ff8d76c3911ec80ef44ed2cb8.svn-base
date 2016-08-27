@@ -1,0 +1,5 @@
+
+.page-header {
+    color: black;
+    text-align: center;
+}

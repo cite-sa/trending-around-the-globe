@@ -1,0 +1,124 @@
+var http = "http://";
+var vmIP = "192.168.32.83";
+var path = ":8080/nasa-www-webapp/trends/";
+
+var limitqueryParam = "?limit=";
+
+var listAllLocationsUrl = http + vmIP + path + "listAllLocations";
+var listAllTrendsUrl = http + vmIP + path + "listAllTrends";
+var getTrendsByNameUrl = http + vmIP + path + "getTrends/";
+var getLocationsByNameUrl = http + vmIP + path + "getLocations/";
+var getTopTrendsUrl = http + vmIP + path + "topTrendsToday/";
+var getTopTrendsPerLocationUrl = http + vmIP + path + "topTrendsLocation/";
+
+function findAllLocations() {
+    $.ajax({
+        method: "GET",
+        url: listAllLocationsUrl,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createDomforLocations(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function findAllTrends() {
+    $.ajax({
+        method: "GET",
+        url: listAllTrendsUrl,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createDomforTrends(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function findLocationByName(locationName) {
+    $.ajax({
+        method: "GET",
+        url: getLocationsByNameUrl + locationName,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createDomforLocationPerName(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function findTrendByName(trendName) {
+    $.ajax({
+        method: "GET",
+        url: getTrendsByNameUrl + trendName,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createDomforTrendPerName(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function findTopTrends(counter) {
+    $.ajax({
+        method: "GET",
+        url: getTopTrendsUrl + counter,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createDomforTopTrends(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function drawAllLocations() {
+    $.ajax({
+        method: "GET",
+        url: listAllLocationsUrl,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            drawLocation(data);
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}
+
+function topTrendsPerLocation(woeid,limit) {
+    $.ajax({
+        method: "GET",
+        url: getTopTrendsPerLocationUrl + woeid + limitqueryParam + limit,
+        dataType: "json",
+        success: function (data, status, jqXHR) {
+            createGeoTextForTrends(data, woeid)
+        },
+        error: function (xhr, status) {
+            console.log("error");
+            console.log(xhr);
+            console.log(status);
+        }
+    });
+}

@@ -1,0 +1,77 @@
+package gr.cite.nasa.www.resources;
+
+import javax.inject.Inject;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import gr.cite.nasa.www.datastore.DatastoreClient;
+
+@Path("trends")
+@Produces(MediaType.APPLICATION_JSON)
+public class TrendsResource {
+
+	@Inject
+	private DatastoreClient datastoreClient;
+	
+	ExceptionMapper exceptionMapper = new ExceptionMapper();
+
+/*	@Inject
+	private ExceptionMapper exceptionMapper;*/
+
+	@GET
+	@Path("getLocations/{name}")
+	public Response getLocations(@PathParam("name") String name) {
+
+		return Response.ok(datastoreClient.getLocationByName(name)).build();
+	}
+
+	@GET
+	@Path("listAllLocations")
+	public Response listAllLocations() {
+
+		return Response.ok(datastoreClient.listLocations()).build();
+	}
+
+	@GET
+	@Path("getTrends/{name}")
+	public Response getTrends(@PathParam("name") String name) {
+
+		return Response.ok(datastoreClient.getTrend(name)).build();
+	}
+
+	@GET
+	@Path("listAllTrends")
+	public Response listAllTrends() {
+
+		return Response.ok(datastoreClient.listTrends()).build();
+	}
+
+	@GET
+	@Path("topTrendsToday/{counter}")
+	public Response topTrendsToday(@PathParam("counter") int counter) {
+
+		return Response.ok(datastoreClient.topXTrendsToday(counter)).build();
+	}
+
+	@GET
+	@Path("topTrendsLocation/{woeid}")
+	public Response topTrendsLocation(@PathParam("woeid") String woeid, @QueryParam("limit") Integer limit) {
+
+/*		try {
+			Status.REQUESTED_RANGE_NOT_SATISFIABLE.wait(6000);
+			Status.INTERNAL_SERVER_ERROR.wait(6000);
+		} catch (InterruptedException e) {
+			exceptionMapper.toResponse(e);
+		} catch (Exception e) {
+			exceptionMapper.toResponse(e);
+		}*/
+		return Response.ok(datastoreClient.topTrendsPerLocation(woeid, limit)).build();
+	}
+}
