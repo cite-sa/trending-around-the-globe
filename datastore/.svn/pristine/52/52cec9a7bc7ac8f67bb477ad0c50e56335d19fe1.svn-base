@@ -1,0 +1,36 @@
+package gr.cite.nasa.www.core;
+
+import java.time.Instant;
+
+public class TrendWrapperInfo {
+
+	private String lID;
+
+	private int tweet_volume;
+
+	private Instant timestamp;
+
+	public String getlID() {
+		return lID;
+	}
+
+	public void setlID(String lID) {
+		this.lID = lID;
+	}
+
+	public int getTweet_volume() {
+		return tweet_volume;
+	}
+
+	public void setTweet_volume(int tweet_volume) {
+		this.tweet_volume = tweet_volume;
+	}
+
+	public Instant getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Instant timestamp) {
+		this.timestamp = timestamp;
+	}
+}

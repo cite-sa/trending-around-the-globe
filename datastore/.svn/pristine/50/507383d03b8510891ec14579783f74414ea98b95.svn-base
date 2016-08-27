@@ -1,0 +1,48 @@
+package gr.cite.nasa.www.datastore;
+
+import java.util.List;
+import java.util.Map;
+
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+
+import gr.cite.nasa.www.core.Location;
+import gr.cite.nasa.www.core.TrendWrapper;
+
+public interface DatastoreClient {
+
+	void insertLocation(Location location);
+
+	Location getLocationByWoeid(String woeid);
+
+	List<TrendWrapper> getTrend(String name);
+
+	List<TrendWrapper> listTrends();
+
+	List<Location> listLocations();
+
+	void insertLocationData(List<Location> loclist);
+
+	void insertTrendData(List<TrendWrapper> trendList, String lid);
+
+	List<TrendWrapper> topXTrendsToday(int counter);
+
+	void insertTrendIntoLocation(String lid, String tid);
+
+	Location getNoTrendsLocation(String woeid);
+
+	List<Location> listLocationsWithNoTrends();
+
+	void insertTrend(TrendWrapper trendWrapper, String lid);
+
+	List<Location> getLocationByName(String name);
+
+	List<Document> getLocationDocuments();
+
+	List<Document> getTrendWrapperDocuments();
+
+	Map<String, Integer> topTrendsPerLocation(String woeid, Integer limit);
+
+	Document getDocumentById(String id, MongoCollection<Document> mongoCollection);
+}

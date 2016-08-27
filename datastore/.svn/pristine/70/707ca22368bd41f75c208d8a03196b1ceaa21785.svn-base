@@ -1,0 +1,128 @@
+package gr.cite.nasa.www.datastore.mongo;
+
+import gr.cite.nasa.www.core.Location;
+import gr.cite.nasa.www.core.TrendWrapper;
+import gr.cite.nasa.www.datastore.DatastoreClient;
+
+import static org.junit.Assert.assertNotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.Test;
+
+public class MongoDatastoreClientTest {
+
+	private DatastoreClient client;
+
+	public MongoDatastoreClientTest() {
+
+		client = new MongoDatastoreClient();
+	}
+
+	private static TrendWrapper createDummyTrend() {
+
+		TrendWrapper dummyTrend = new TrendWrapper();
+
+		dummyTrend.setTid(RandomStringUtils.randomAlphanumeric(2));
+
+		// dummyTrend.setTrendName(RandomStringUtils.randomAlphanumeric(8));
+
+		return dummyTrend;
+
+	}
+
+	public void insertTrendsTest() {
+
+		for (int i = 0; i < 10; i++) {
+
+			TrendWrapper trend = createDummyTrend();
+
+			client.insertTrend(trend, null);
+
+		}
+	}
+
+	public void insertLocationsTest() {
+
+		for (int i = 0; i < 10; i++) {
+
+			Location location = createDummyLocation();
+
+			client.insertLocation(location);
+		}
+	}
+
+	public static Location createDummyLocation() {
+
+		Location dummyLocation = new Location();
+
+		// dummyLocation.setLid(RandomStringUtils.randomAlphanumeric(2));
+
+		dummyLocation.setWoeid(RandomStringUtils.randomAlphanumeric(6));
+
+		// dummyLocation.setTrends(createListOfDummyTrends());
+
+		return dummyLocation;
+
+	}
+
+	static List<TrendWrapper> createListOfDummyTrends() {
+
+		List<TrendWrapper> dummyList = new ArrayList<TrendWrapper>();
+
+		for (int i = 0; i < 5; i++) {
+
+			dummyList.add(createDummyTrend());
+		}
+
+		return dummyList;
+
+	}
+
+	public void createMongo() {
+
+		insertTrendsTest();
+		insertLocationsTest();
+
+	}
+
+	public void queryMongo() {
+
+		client.getLocationByWoeid("pQ");
+
+		assertNotNull(client.getLocationByWoeid("pQ"));
+
+		client.getTrendByName("Sg");
+
+		assertNotNull(client.getTrendByName("Sg"));
+
+/*		client.listTrends();
+
+		assertNotNull(client.listTrends());*/
+
+		client.listLocations();
+
+		assertNotNull(client.listLocations());
+
+		/*
+		 * client.listTrends("pQ");
+		 * 
+		 * assertNotNull(client.listTrends("pQ"));
+		 * 
+		 * client.listLocations("oC");
+		 * 
+		 * assertNotNull(client.listLocations("oC"));
+		 */
+
+	}
+
+	@Test
+	public void main() {
+
+		// createMongo();
+		queryMongo();
+
+	}
+}

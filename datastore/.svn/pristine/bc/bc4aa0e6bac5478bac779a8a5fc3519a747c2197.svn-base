@@ -1,0 +1,343 @@
+package gr.cite.nasa.www.datastore.mongo;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import static com.mongodb.client.model.Filters.*;
+
+import gr.cite.nasa.www.datastore.mongo.Converter;
+
+import com.mongodb.Block;
+import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
+
+import gr.cite.nasa.www.core.Location;
+import gr.cite.nasa.www.core.TrendWrapper;
+import gr.cite.nasa.www.core.TrendWrapperInfo;
+import gr.cite.nasa.www.datastore.DatastoreClient;
+
+public class MongoDatastoreClient implements DatastoreClient {
+
+	private MongoClient mongo;
+	private MongoDatabase dbtwitter;
+	private MongoCollection<Document> locationCollection;
+	private MongoCollection<Document> trendsCollection;
+	
+
+	public MongoDatastoreClient() {
+
+		mongo = new MongoClient("localhost:27017");
+		dbtwitter = mongo.getDatabase("twitterData");
+		locationCollection = dbtwitter.getCollection("locationsTwitter");
+		trendsCollection = dbtwitter.getCollection("trendsTwitter");
+	}
+
+	@Override
+	public void insertLocation(Location location) {
+
+		Document document = Converter.locationToNoTrendDocument(location);
+		Document toUpdate = new Document();
+		toUpdate.append("$setOnInsert", new Document().append("trends", new ArrayList<>()));
+
+		FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+		updateOptions.returnDocument(ReturnDocument.AFTER);
+		updateOptions.upsert(true);
+		Document updateDocument = locationCollection.findOneAndUpdate(document, toUpdate, updateOptions);
+
+		location.setlID(updateDocument.getObjectId("_id").toString());
+	}
+
+	@Override
+	public Location getLocationByWoeid(String woeid) {
+
+		Document document = locationCollection.find(Filters.eq("woeid", woeid)).first();// .first()
+		Location location = Converter.documentToLocation(document);
+		return location;
+	}
+
+	@Override
+	public List<Location> getLocationByName(String name) {
+
+		List<Location> locationList = new ArrayList<>();
+
+		FindIterable<Document> iterable = dbtwitter.getCollection("locationsTwitter").find(eq("name", name));
+
+		iterable.forEach(new Block<Document>() {
+			@Override
+			public void apply(final Document document) {
+				Location location = Converter.documentToLocation(document);
+				locationList.add(location);
+			}
+		});
+		return locationList;
+	}
+
+	@Override
+	public Location getNoTrendsLocation(String woeid) {
+
+		Document document = locationCollection.find(Filters.eq("woeid", woeid)).limit(1).first();// .first()
+		Location location = Converter.documentToNoTrendsLocation(document);
+		return location;
+	}
+
+	@Override
+	public List<Document> getLocationDocuments() {
+
+		List<Document> locationsDocuments = new ArrayList<>();
+		FindIterable<Document> iterable = dbtwitter.getCollection("locationsTwitter").find();
+
+		iterable.forEach(new Block<Document>() {
+			@Override
+			public void apply(final Document document) {
+				locationsDocuments.add(document);
+			}
+		});
+		return locationsDocuments;
+	}
+
+	@Override
+	public void insertTrend(TrendWrapper trendWrapper, String lid) {
+
+		List<TrendWrapperInfo> trendWrapperInfo = trendWrapper.getLocations();
+
+		Document newLocation = new Document();
+
+		for (TrendWrapperInfo trendWrapperInfo2 : trendWrapperInfo) {
+			newLocation.append("lid", lid).append("tweet_volume", trendWrapperInfo2.getTweet_volume());
+
+			Date myDate = Date.from(trendWrapperInfo2.getTimestamp());
+			newLocation.append("timestamp", myDate);
+		}
+
+		Document document = Converter.trendToNoLocationDocument(trendWrapper);
+		Document toUpdate = new Document();
+		toUpdate.append("$addToSet", new Document().append("locations", newLocation));
+
+		FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+		updateOptions.returnDocument(ReturnDocument.AFTER);
+		updateOptions.upsert(true);
+		Document updateDocument = trendsCollection.findOneAndUpdate(document, toUpdate, updateOptions);
+
+		trendWrapper.setTid(updateDocument.getObjectId("_id").toString());
+	}
+
+	@Override
+	public List<TrendWrapper> getTrend(String name) {
+
+		List<TrendWrapper> trendList = new ArrayList<>();
+
+		FindIterable<Document> iterable = dbtwitter.getCollection("trendsTwitter").find(eq("name", name));
+
+		iterable.forEach(new Block<Document>() {
+			@Override
+			public void apply(final Document document) {
+				TrendWrapper trend = Converter.documentToTrend(document);
+				trendList.add(trend);
+			}
+		});
+		return trendList;
+	}
+
+	@Override
+	public List<Document> getTrendWrapperDocuments() {
+
+		List<Document> trendsDocuments = new ArrayList<>();
+		FindIterable<Document> iterable = dbtwitter.getCollection("trendsTwitter").find();
+
+		iterable.forEach(new Block<Document>() {
+			@Override
+			public void apply(final Document document) {
+				trendsDocuments.add(document);
+			}
+		});
+		return trendsDocuments;
+	}
+
+	@Override
+	public List<TrendWrapper> listTrends() {
+
+		List<TrendWrapper> result = new ArrayList<>();
+
+		MongoCursor<Document> cursor = trendsCollection.find().iterator();
+
+		try {
+
+			while (cursor.hasNext()) {
+
+				result.add(Converter.documentToTrend(cursor.next()));
+			}
+
+		} finally {
+
+			cursor.close();
+		}
+		return result;
+	}
+
+	@Override
+	public List<Location> listLocations() {
+
+		MongoCursor<Document> cursor = locationCollection.find().iterator();
+		List<Location> result = new ArrayList<Location>();
+
+		try {
+
+			while (cursor.hasNext()) {
+
+				result.add(Converter.documentToLocation(cursor.next()));
+			}
+
+		} finally {
+
+			cursor.close();
+		}
+		return result;
+	}
+
+	@Override
+	public List<Location> listLocationsWithNoTrends() {
+
+		MongoCursor<Document> cursor = locationCollection.find().iterator();
+		List<Location> result = new ArrayList<Location>();
+
+		try {
+
+			while (cursor.hasNext()) {
+
+				result.add(Converter.documentToNoTrendsLocation(cursor.next()));
+			}
+
+		} finally {
+
+			cursor.close();
+		}
+		return result;
+	}
+
+	@Override
+	public List<TrendWrapper> topXTrendsToday(int counter) {
+
+		List<TrendWrapper> topTrendList = new ArrayList<>();
+
+		FindIterable<Document> sorted = dbtwitter.getCollection("trendsTwitter").find()
+				.sort(new Document("locations.tweet_volume", -1)).limit(counter);
+
+		sorted.forEach(new Block<Document>() {
+			@Override
+			public void apply(final Document document) {
+				TrendWrapper trend = Converter.documentToTrend(document);
+				topTrendList.add(trend);
+			}
+		});
+		return topTrendList;
+	}
+
+	@Override
+	public Map<String, Integer> topTrendsPerLocation(String woeid, Integer limit) {
+
+		Map<String, Integer> topTrendsOfLocation = new HashMap<>();
+
+		Location location = getLocationByWoeid(woeid);
+		Document locationDocument = getDocumentById(location.getlID(), locationCollection);
+
+		List<String> trendIDs = location.getTrendsIDs();
+
+		for (String tid : trendIDs) {
+
+			Document documentInTrends = getDocumentById(tid, trendsCollection);
+
+			FindIterable<Document> locationsInTrends = dbtwitter.getCollection("trendsTwitter")
+					.find(Filters.eq("locations.lid", locationDocument.getObjectId("_id").toString()))
+					.sort(new Document("locations.tweet_volume", -1));
+			
+			if (limit != null) {
+				locationsInTrends.limit(limit);
+			}
+
+			locationsInTrends.forEach(new Block<Document>() {
+				@Override
+				public void apply(final Document document) {
+					List<Document> list = document.get("locations", List.class);
+					for (Document loc : list) {
+						if (loc.getString("lid").equals(location.getlID())) {
+							topTrendsOfLocation.put(document.getString("name"), loc.getInteger("tweet_volume"));
+						}
+					}
+				}
+			});
+		}
+		return topTrendsOfLocation;
+	}
+
+	@Override
+	public Document getDocumentById(String id, MongoCollection<Document> mongoCollection) {
+
+		return mongoCollection.find(Filters.eq("_id", new ObjectId(id))).first();
+	}
+
+	@Override
+	public void insertLocationData(List<Location> locationList) {
+
+		for (Location location : locationList) {
+
+			Document document = Converter.locationToNoTrendDocument(location);
+			Document toUpdate = new Document();
+			toUpdate.append("$setOnInsert", new Document().append("trends", new ArrayList<>()));
+
+			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			updateOptions.returnDocument(ReturnDocument.AFTER);
+			updateOptions.upsert(true);
+			Document updateDocument = locationCollection.findOneAndUpdate(document, toUpdate, updateOptions);
+
+			location.setlID(updateDocument.getObjectId("_id").toString());
+		}
+	}
+
+	@Override
+	public void insertTrendIntoLocation(String lid, String tid) {
+
+		locationCollection.updateOne(Filters.eq("_id", new ObjectId(lid)),
+				new Document().append("$addToSet", new Document().append("trends", new Document().append("tid", tid))));
+	}
+
+	@Override
+	public void insertTrendData(List<TrendWrapper> trendList, String lid) {
+
+		for (TrendWrapper trendWrapper : trendList) {
+
+			List<TrendWrapperInfo> trendWrapperInfo = trendWrapper.getLocations();
+
+			Document newLocation = new Document();
+
+			for (TrendWrapperInfo trendWrapperInfo2 : trendWrapperInfo) {
+				newLocation.append("lid", lid).append("tweet_volume", trendWrapperInfo2.getTweet_volume());
+
+				java.util.Date myDate = Date.from(trendWrapperInfo2.getTimestamp());
+				newLocation.append("timestamp", myDate);
+			}
+
+			Document document = Converter.trendToNoLocationDocument(trendWrapper);
+			Document toUpdate = new Document();
+			toUpdate.append("$addToSet", new Document().append("locations", newLocation));
+
+			FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+			updateOptions.returnDocument(ReturnDocument.AFTER);
+			updateOptions.upsert(true);
+			Document updateDocument = trendsCollection.findOneAndUpdate(document, toUpdate, updateOptions);
+
+			trendWrapper.setTid(updateDocument.getObjectId("_id").toString());
+		}
+	}
+}
